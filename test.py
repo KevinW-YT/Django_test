@@ -12,3 +12,6 @@ def fib(n):
         return 1
     else:
         return fib(n-1) + fib(n-2)
+
+print("the fib sequence is ", fib(3))
+
