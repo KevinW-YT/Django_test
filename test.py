@@ -1,9 +1,8 @@
 print("Hello World!")
 
 for i in range(10):
-    print(i, end = |)
+    print(i, end = "|")
 
-    
 
 def fib(n):
     if n == 0:
