@@ -8,7 +8,14 @@ from django.shortcuts import get_object_or_404
 
 # Create your views here.
 def home(request):
-    return render(request, 'myapp/home.html')  # Make sure to create this template
+    exercise_tasks = ToDoItem.objects.filter(category=ToDoItem.EXERCISE)
+    stretching_tasks = ToDoItem.objects.filter(category=ToDoItem.STRETCHING)
+    cardio_tasks = ToDoItem.objects.filter(category=ToDoItem.CARDIO)
+    return render(request, 'myapp/home.html', {
+        'exercise_tasks': exercise_tasks,
+        'stretching_tasks': stretching_tasks,
+        'cardio_tasks': cardio_tasks
+    })  # Make sure to create this template
 
 def login(request):
     return render(request, 'myapp/login.html')
