@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitPet - Pets</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body class="pets-page">
+    <header>
+        <div class="currency-display">
+            <div class="coin-container">
+                <div class="animated-coin"></div>
+                <img src="{% static 'images/coin2.png' %}" alt="Coin">
+                {% if user.is_authenticated %}
+                    <span id="coin-count">{{ user.profile.points }}</span>
+                {% else %}
+                    <span id="coin-count">0</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}" class="inactive">Dashboard</a></li>
+                <li><a href="{% url 'pets' %}" class="active">Pets</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Your Pets Collection</h2>
+        
+        <div class="pets-grid">
+            {% for pet in pets %}
+                <div class="pet-card {% if pet in user.profile.pets.all %}active{% else %}locked{% endif %}" data-id="{{ pet.id }}" data-price="{{ pet.price }}">
+                    {% if pet not in user.profile.pets.all %}
+                        <div class="lock-overlay">
+                            <img src="{% static 'images/lock.png' %}" alt="Locked" class="lock-icon">
+                        </div>
+                    {% endif %}
+                    <img src="{% static pet.image %}" alt="{{ pet.name }} Pet">
+                    <h3>{{ pet.name }} Pet</h3>
+                    <p class="pet-price">{{ pet.price }} coins</p>
+                    {% if pet in user.profile.pets.all %}
+                        <button class="select-btn" data-id="{{ pet.id }}">Select</button>
+                    {% else %}
+                        <button class="buy-btn" data-id="{{ pet.id }}" data-price="{{ pet.price }}">Unlock</button>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- JavaScript to handle buying and selecting pets -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Handle buy buttons
+            const buyButtons = document.querySelectorAll('.buy-btn');
+
+            buyButtons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    const petId = button.dataset.id;
+                    const petPrice = button.dataset.price;
+
+                    const response = await fetch("{% url 'buy_pet' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: JSON.stringify({ pet_id: petId }),
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        alert(data.message);
+                        document.getElementById('coin-count').textContent = data.coins;
+                        const card = button.closest('.pet-card');
+                        card.classList.remove('locked');
+                        card.classList.add('active');
+                        card.querySelector('.lock-overlay')?.remove();
+                        button.textContent = 'Select';
+                        button.classList.remove('buy-btn');
+                        button.classList.add('select-btn');
+
+                        // Attach event listener to the "Select" button after it changes from "Unlock"
+                        attachSelectButtonListener(button);
+                    } else {
+                        alert(data.message);
+                    }
+                });
+            });
+
+            // Handle select buttons
+            const selectButtons = document.querySelectorAll('.select-btn');
+            selectButtons.forEach(button => attachSelectButtonListener(button));
+
+            function attachSelectButtonListener(button) {
+                button.addEventListener('click', async () => {
+                    const petId = button.dataset.id;  // Get the pet ID from the button's data attribute
+                    console.log('Selecting pet with ID:', petId);  // Debugging log
+
+                    const response = await fetch("{% url 'select_pet' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: JSON.stringify({ pet_id: petId }),
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        alert(data.message);
+                        document.getElementById('active-pet').src = data.pet_image;  // Update the pet image
+                        document.getElementById('pet-name').textContent = data.pet_name;  // Update the pet name
+                    } else {
+                        alert(data.message);
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script src="script.js"></script>
+</body>
+</html>

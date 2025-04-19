@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FitPet - Dashboard</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}" />
+  </head>
+  <body class="dashboard-page">
+    <header>
+      <div class="currency-display">
+        <div class="coin-container">
+          <div class="animated-coin"></div>
+          <img src="{% static 'images/coin2.png' %}" alt="Coin">
+            {% if user.is_authenticated %}
+            <span id="coin-count">{{ user.profile.points }}</span>
+            {% else %}
+            <span id="coin-count">0</span>
+            {% endif %}
+        </div>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="{% url 'home' %}" class="active">Dashboard</a></li>
+          <li><a href="{% url 'pets' %}">Pets</a></li>
+          {% if user.is_authenticated %}
+          <li>
+            <form method="POST" action="{% url 'logout' %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" class="logout-btn">Logout</button>
+            </form>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </header>
+    <main>
+    <div class="current-pet-container">
+        <h2>Your Current Pet</h2>
+        <div class="current-pet">
+            {% if user.profile.current_pet %}
+                <img id="active-pet" src="{% static user.profile.current_pet.image %}" alt="Your Pet" />
+                <h3 id="pet-name">{{ user.profile.current_pet.name }}</h3>
+            {% else %}
+                <img id="active-pet" src="{% static 'images/default-pet.png' %}" alt="Your Pet" />
+                <h3 id="pet-name">Default Pet</h3>
+            {% endif %}
+        </div>
+    </div>
+  <div class="workouts-container">
+    <!-- Weightlifting Section -->
+    <div class="workout-category" id="exercise">
+      <h3>Weightlifting</h3>
+      <ul class="workout-list" id="exercise-list">
+        {% for task in tasks_by_category.exercise %}
+          <li>
+            {{ task.title }} - 
+            <a href="{% url 'mark_task_complete' category='exercise' task_id=task.id %}" class="complete-btn">✔</a>
+          </li>
+        {% empty %}
+          <li class="no-tasks">No Weightlifting tasks found.</li>
+        {% endfor %}
+      </ul>
+      <div class="add-workout">
+        <form method="post" action="{% url 'add_task' category='exercise' %}">
+          {% csrf_token %}
+          <input type="text" name="title" placeholder="Add a new Weightlifting task" required />
+          <button type="submit">Add Task</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Stretching Section -->
+    <div class="workout-category" id="stretching">
+      <h3>Stretching</h3>
+      <ul class="workout-list" id="stretching-list">
+        {% for task in tasks_by_category.stretching %}
+          <li>
+            {{ task.title }} - 
+            <a href="{% url 'mark_task_complete' category='stretching' task_id=task.id %}" class="complete-btn">✔</a>
+          </li>
+        {% empty %}
+          <li class="no-tasks">No Stretching tasks found.</li>
+        {% endfor %}
+      </ul>      
+      <div class="add-workout">
+        <form method="post" action="{% url 'add_task' category='stretching' %}">
+          {% csrf_token %}
+          <input type="text" name="title" placeholder="Add a new Stretching task" required />
+          <button type="submit">Add Task</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Cardio Section -->
+    <div class="workout-category" id="cardio">
+      <h3>Cardio</h3>
+      <ul class="workout-list" id="cardio-list">
+        {% for task in tasks_by_category.cardio %}
+          <li>
+            {{ task.title }} - 
+            <a href="{% url 'mark_task_complete' category='cardio' task_id=task.id %}" class="complete-btn">✔</a>
+          </li>
+        {% empty %}
+          <li class="no-tasks">No Cardio tasks found.</li>
+        {% endfor %}
+      </ul>
+      <div class="add-workout">
+        <form method="post" action="{% url 'add_task' category='cardio' %}">
+          {% csrf_token %}
+          <input type="text" name="title" placeholder="Add a new Cardio task" required />
+          <button type="submit">Add Task</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+  <script src="script.js"></script>
+    <div class="tips-container">
+      <h2>Want Some Advice?</h2>
+      <ul id="tips-list">
+          <li>Loading tips...</li>
+      </ul>
+    </div>
+    <!-- JavaScript to fetch tips -->
+    <script>
+        async function fetchTips() {
+            try {
+                const response = await fetch('/get-tips/');
+                const data = await response.json();
+                const tipsList = document.getElementById('tips-list');
+                tipsList.innerHTML = '';  // Clear existing tips
+
+                if (data.tips.length > 0) {
+                    data.tips.forEach(tip => {
+                        const li = document.createElement('li');
+                        li.textContent = tip;
+                        tipsList.appendChild(li);
+                    });
+                } else {
+                    tipsList.innerHTML = '<li>No tips available at this time.</li>';
+                }
+            } catch (error) {
+                console.error("Failed to fetch tips:", error);
+                document.getElementById('tips-list').innerHTML = '<li>Failed to load tips.</li>';
+            }
+        }
+
+        // Fetch tips when the page loads
+        document.addEventListener('DOMContentLoaded', fetchTips);
+    </script>
+  </body>
+</html>
